@@ -11,16 +11,26 @@ const markdown = require('gulp-markdown');
 const autoprefixer = require('gulp-autoprefixer');
 const webpackConfig = require('./webpack.config');
 
+const { prjectName, mode } = (() => {
+  const data = { prjectName: 'demo', mode: 'development' };
+  const [mode, prjectName] = process.env.NODE_ENV ? process.env.NODE_ENV.split(/\,/) : [];
+  if (mode) data.mode = mode;
+  if (prjectName) data.prjectName = prjectName;
+  return data;
+})();
+
 const paths = {
   styles: {
-    src: 'src/styles/**/*.less',
-    dest: 'dist/css/'
+    src: path.resolve(__dirname, `src/${prjectName}/css/index.less`),
+    dest: path.resolve(__dirname, `dist/${prjectName}/css`)
   },
   scripts: {
-    src: 'src/**/*.js',
-    dest: 'dist/js/'
+    src: path.resolve(__dirname, `src/${prjectName}/js/index.js`),
+    dest: path.resolve(__dirname, `dist/${prjectName}/js`)
   }
 };
+
+console.log('paths', paths);
 
 /**
  * js 打包日志
@@ -66,11 +76,12 @@ function js() {
   webpack(
     merge(webpackConfig, {
       entry: {
-        index: `${paths.scripts.src}`
+        index: paths.scripts.src
       },
       output: {
-        path: path.resolve(__dirname, paths.scripts.dest)
-      }
+        path: paths.scripts.dest
+      },
+      mode,
     })
   ).watch(200, (err, stats) => log(err, stats));
 }

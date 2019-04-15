@@ -9,7 +9,7 @@ module.exports = {
     filename: '[name].js'
   },
   // mode: 'production',
-  mode: 'development',
+  // mode: 'development',
   watch: true,
   profile: true,
   cache: true,
