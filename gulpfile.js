@@ -20,12 +20,16 @@ const { prjectName, mode } = (() => {
 })();
 
 const paths = {
+  htmls: {
+    src: path.resolve(__dirname, `src/${prjectName}/index.html`),
+    dest: path.resolve(__dirname, `dist/${prjectName}/`)
+  },
   styles: {
-    src: path.resolve(__dirname, `src/${prjectName}/css/index.less`),
+    src: path.resolve(__dirname, `src/${prjectName}/index.less`),
     dest: path.resolve(__dirname, `dist/${prjectName}/css`)
   },
   scripts: {
-    src: path.resolve(__dirname, `src/${prjectName}/js/index.js`),
+    src: path.resolve(__dirname, `src/${prjectName}/index.js`),
     dest: path.resolve(__dirname, `dist/${prjectName}/js`)
   }
 };
@@ -51,6 +55,12 @@ function clean() {
   // for example if you are using del 2.0 or above, return its promise
   return del(['dist']);
 }
+
+function html() {
+  return gulp.src(paths.htmls.src)
+    .pipe(gulp.dest(paths.htmls.dest));
+}
+
 
 /*
  * Define our tasks using plain functions
@@ -101,6 +111,7 @@ function watch() {
  * You can use CommonJS `exports` module notation to declare tasks
  */
 exports.clean = clean;
+exports.html = html;
 exports.styles = css;
 exports.scripts = js;
 exports.watch = watch;
@@ -108,7 +119,7 @@ exports.watch = watch;
 /*
  * Specify if tasks run in series or parallel using `gulp.series` and `gulp.parallel`
  */
-const build = gulp.series(clean, gulp.parallel(css, js));
+const build = gulp.series(clean, gulp.parallel(html, css, js));
 
 /*
  * You can still use `gulp.task` to expose tasks
