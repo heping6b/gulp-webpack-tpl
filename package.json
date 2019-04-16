@@ -6,7 +6,7 @@
   "scripts": {
     "demo": "cross-env NODE_ENV=development,demo gulp --gulpfile gulpfile.js",
     "demo2": "cross-env NODE_ENV=production,demo gulp --gulpfile gulpfile.js",
-    "lunar": "cross-env NODE_ENV=production,lunar gulp --gulpfile gulpfile.js"
+    "lunar": "cross-env NODE_ENV=development,lunar gulp --gulpfile gulpfile.js"
   },
   "repository": {
     "type": "git",
