@@ -1,6 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
-// new es3ifyPlugin()
+// eg: new es3ifyPlugin()
 // const es3ifyPlugin = require('es3ify-webpack-plugin')
 
 module.exports = {
@@ -15,6 +15,9 @@ module.exports = {
   cache: true,
   externals: {
     EditTable: 'EditTable'
+  },
+  node: {
+    fs: 'empty'
   },
   module: {
     rules: [
@@ -35,10 +38,7 @@ module.exports = {
       path.resolve(__dirname, 'src')
     ],
     // directories where to look for modules
-    extensions: ['.js', '.ts']
+    extensions: ['.ts', '.tsx', '.js', '.jsx']
     // extensions that are used
   },
-  node: {
-    fs: 'empty'
-  }
 }

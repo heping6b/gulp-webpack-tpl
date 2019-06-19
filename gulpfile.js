@@ -11,40 +11,40 @@ const markdown = require('gulp-markdown');
 const autoprefixer = require('gulp-autoprefixer');
 const webpackConfig = require('./webpack.config');
 
-const { prjectName, mode } = (() => {
-  const data = { prjectName: 'demo', mode: 'development' };
-  const [mode, prjectName] = process.env.NODE_ENV ? process.env.NODE_ENV.split(/\,/) : [];
-  if (mode) data.mode = mode;
-  if (prjectName) data.prjectName = prjectName;
-  return data;
-})();
+const prjectName = process.env.PROJECT_NAME || 'demo';
+const prjectMode = process.env.NODE_ENV || 'development';
 
-const paths = {
+console.log('process.env', process.env);
+
+function getSrc(file) {
+  return path.resolve(__dirname, `src/${prjectName}/${file}`);
+}
+
+function getDest(file) {
+  return path.resolve(__dirname, file ? `dist/${prjectName}/${file}` : `dist/${prjectName}/`);
+}
+
+const filePath = {
   htmls: {
-    src: path.resolve(__dirname, `src/${prjectName}/index.html`),
-    dest: path.resolve(__dirname, `dist/${prjectName}/`)
+    src: getSrc('index.html'),
+    dest: getDest()
   },
+
   styles: {
-    src: path.resolve(__dirname, `src/${prjectName}/index.less`),
-    dest: path.resolve(__dirname, `dist/${prjectName}/css`)
+    src: getSrc('index.less'),
+    dest: getDest('css')
   },
+
   scripts: {
-    src: path.resolve(__dirname, `src/${prjectName}/index.js`),
-    dest: path.resolve(__dirname, `dist/${prjectName}/js`)
+    src: getSrc('index.js'),
+    dest: getDest('js')
+  },
+
+  mds: {
+    src: 'docs/**/*.md',
+    dest: path.resolve(__dirname, `dist/${docs}`)
   }
 };
-
-console.log('paths', paths);
-
-/**
- * js 打包日志
- * @param {*} err 
- * @param {*} msg 
- */
-function log(err, msg) {
-  if (err) throw new gutil.PluginError('buildjs', err);
-  gutil.log('[gulp]', msg.toString({ colors: true }));
-}
 
 /* Not all tasks need to use streams, a gulpfile is just another node program
  * and you can use all packages available on npm, but it must return either a
@@ -57,8 +57,8 @@ function clean() {
 }
 
 function html() {
-  return gulp.src(paths.htmls.src)
-    .pipe(gulp.dest(paths.htmls.dest));
+  return gulp.src(filePath.htmls.src)
+    .pipe(gulp.dest(filePath.htmls.dest));
 }
 
 
@@ -66,16 +66,21 @@ function html() {
  * Define our tasks using plain functions
  */
 function css() {
-  return gulp.src(paths.styles.src)
-    .pipe(less({ javascriptEnabled: true }).on('error', (e) => {
-      console.error(e.message);
-      this.emit('end');
-    }))
+  return gulp.src(filePath.styles.src)
+    .pipe(
+      less({
+        javascriptEnabled: true
+      })
+        .on('error', (e) => {
+          console.error(e.message);
+          this.emit('end');
+        })
+    )
     .pipe(autoprefixer())
-    .pipe(gulp.dest(paths.styles.dest))
+    .pipe(gulp.dest(filePath.styles.dest))
     .pipe(mincss())
     .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest(paths.styles.dest));
+    .pipe(gulp.dest(filePath.styles.dest));
 }
 
 
@@ -86,26 +91,36 @@ function js() {
   webpack(
     merge(webpackConfig, {
       entry: {
-        index: paths.scripts.src
+        index: filePath.scripts.src
       },
       output: {
-        path: paths.scripts.dest
+        path: filePath.scripts.dest
       },
-      mode,
+      mode: prjectMode,
     })
-  ).watch(200, (err, stats) => log(err, stats));
+  ).watch(200, (err, stats) => {
+    if (err) {
+      throw new gutil.PluginError('buildjs', err);
+    }
+    gutil.log('[gulp]', stats.toString({ colors: true }));
+  });
 }
 
 function md() {
-  gulp.src(['doc/**/*.md'])
+  return gulp.src(filePath.mds.src)
     .pipe(markdown())
-    .pipe(gulp.dest(dst + 'doc/'));
+    .pipe(gulp.dest(filePath.mds.dest));
 }
 
 function watch() {
-  gulp.watch(paths.scripts.src, js);
-  gulp.watch(paths.styles.src, css);
+  gulp.watch(filePath.scripts.src, js);
+  gulp.watch(filePath.styles.src, css);
 }
+
+/*
+ * Specify if tasks run in series or parallel using `gulp.series` and `gulp.parallel`
+ */
+const build = gulp.series(clean, gulp.parallel(html, css, md, js));
 
 /*
  * You can use CommonJS `exports` module notation to declare tasks
@@ -113,20 +128,11 @@ function watch() {
 exports.clean = clean;
 exports.html = html;
 exports.styles = css;
+exports.md = md;
 exports.scripts = js;
 exports.watch = watch;
 
 /*
- * Specify if tasks run in series or parallel using `gulp.series` and `gulp.parallel`
- */
-const build = gulp.series(clean, gulp.parallel(html, css, js));
-
-/*
- * You can still use `gulp.task` to expose tasks
- */
-gulp.task('build', build);
-
-/*
  * Define default task that can be called by just running `gulp` from cli
  */
-gulp.task('default', build);
+exports.default = build;
