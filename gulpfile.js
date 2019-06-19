@@ -11,7 +11,7 @@ const markdown = require('gulp-markdown');
 const autoprefixer = require('gulp-autoprefixer');
 const webpackConfig = require('./webpack.config');
 
-const prjectName = process.env.PROJECT_NAME || 'demo';
+const prjectName = process.env.MY_PROJECT_NAME || 'demo';
 const prjectMode = process.env.NODE_ENV || 'development';
 
 console.log('process.env', process.env);
@@ -31,18 +31,18 @@ const filePath = {
   },
 
   styles: {
-    src: getSrc('index.less'),
+    src: getSrc('css/index.less'),
     dest: getDest('css')
   },
 
   scripts: {
-    src: getSrc('index.js'),
+    src: getSrc('js/index.js'),
     dest: getDest('js')
   },
 
   mds: {
     src: 'docs/**/*.md',
-    dest: path.resolve(__dirname, `dist/${docs}`)
+    dest: path.resolve(__dirname, 'dist/docs')
   }
 };
 
@@ -56,7 +56,7 @@ function clean() {
   return del(['dist']);
 }
 
-function html() {
+function htmls() {
   return gulp.src(filePath.htmls.src)
     .pipe(gulp.dest(filePath.htmls.dest));
 }
@@ -106,29 +106,34 @@ function js() {
   });
 }
 
-function md() {
+function mds() {
   return gulp.src(filePath.mds.src)
     .pipe(markdown())
     .pipe(gulp.dest(filePath.mds.dest));
 }
 
 function watch() {
+  gulp.watch(filePath.htmls.src, htmls);
   gulp.watch(filePath.scripts.src, js);
+  gulp.watch(filePath.mds.src, mds);
   gulp.watch(filePath.styles.src, css);
 }
 
 /*
  * Specify if tasks run in series or parallel using `gulp.series` and `gulp.parallel`
  */
-const build = gulp.series(clean, gulp.parallel(html, css, md, js));
+const build = gulp.series(
+  clean,
+  gulp.parallel(htmls, css, mds, js, watch)
+);
 
 /*
  * You can use CommonJS `exports` module notation to declare tasks
  */
 exports.clean = clean;
-exports.html = html;
+exports.html = htmls;
 exports.styles = css;
-exports.md = md;
+exports.mds = mds;
 exports.scripts = js;
 exports.watch = watch;
 

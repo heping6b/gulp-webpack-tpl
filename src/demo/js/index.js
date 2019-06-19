@@ -3,3 +3,5 @@ class CD {
     console.log(1)
   }
 }
+
+console.log(new CD());
