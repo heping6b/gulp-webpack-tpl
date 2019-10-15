@@ -10,25 +10,30 @@ var merge = require('webpack-merge');
 var mincss = require('gulp-clean-css');
 var markdown = require('gulp-markdown');
 var autoprefixer = require('gulp-autoprefixer');
+var connect = require('gulp-connect');
+
 var webpackConfig = require('./webpack.config');
 
 var NODE_ENV = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
-console.log('process.env', process.env);
+// console.log('process.env', process.env);
+
+var _entry = 'src';
+var _output = 'dist';
 
 // 项目配置
-var projectConfig = {
+var _config = {
   html: {
-    src: 'src/index.html',
-    dest: 'dist'
+    src: _entry + '/**/*.html',
+    dest: _output
   },
   styles: {
-    src: 'src/styles/index.less',
-    dest: 'dist/styles'
+    src: _entry + '/styles/index.less',
+    dest: _output + '/styles'
   },
   scripts: {
-    src: 'src/scripts/index.js',
-    dest: 'dist/scripts'
+    src: _entry + '/scripts/index.js',
+    dest: _output + '/scripts'
   },
   mds: {
     src: 'documents/**/*.md',
@@ -47,15 +52,16 @@ function clean() {
 }
 
 function html() {
-  return gulp.src(projectConfig.html.src)
-    .pipe(gulp.dest(projectConfig.html.dest));
+  return gulp.src(_config.html.src)
+    .pipe(gulp.dest(_config.html.dest))
+    .pipe(connect.reload());
 }
 
 /*
  * Define our tasks using plain functions
  */
 function styles() {
-  return gulp.src(projectConfig.styles.src)
+  return gulp.src(_config.styles.src)
     .pipe(
       less({
         javascriptEnabled: true
@@ -66,10 +72,10 @@ function styles() {
         })
     )
     .pipe(autoprefixer())
-    .pipe(gulp.dest(projectConfig.styles.dest))
+    .pipe(gulp.dest(_config.styles.dest))
     .pipe(mincss())
     .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest(projectConfig.styles.dest));
+    .pipe(gulp.dest(_config.styles.dest));
 }
 
 /*
@@ -78,9 +84,10 @@ function styles() {
 function scripts() {
   webpack(
     merge(webpackConfig, {
-      entry: path.resolve(__dirname, projectConfig.scripts.src),
+      entry: path.resolve(__dirname, _config.scripts.src),
       output: {
-        path: path.resolve(__dirname, projectConfig.scripts.dest),
+        path: path.resolve(__dirname, _config.scripts.dest),
+        filename: '[name].js'
       },
       mode: NODE_ENV,
     })
@@ -93,16 +100,26 @@ function scripts() {
 }
 
 function mds() {
-  return gulp.src(projectConfig.mds.src)
+  return gulp.src(_config.mds.src)
     .pipe(markdown())
-    .pipe(gulp.dest(projectConfig.mds.dest));
+    .pipe(gulp.dest(_config.mds.dest));
+}
+
+function server() {
+  connect.server({
+    name: 'App',
+    root: _output,
+    port: 3030,
+    livereload: true,
+    index: 'index.html'
+  });
 }
 
 function watch() {
-  gulp.watch(projectConfig.html.src, html);
-  gulp.watch(projectConfig.styles.src, scripts);
-  gulp.watch(projectConfig.styles.src, styles);
-  gulp.watch(projectConfig.mds.src, mds);
+  gulp.watch(_config.html.src, html);
+  gulp.watch(_config.styles.src, scripts);
+  gulp.watch(_config.styles.src, styles);
+  gulp.watch(_config.mds.src, mds);
 }
 
 /*
@@ -115,7 +132,8 @@ var build = gulp.series(
     styles,
     scripts,
     mds,
-    watch
+    watch,
+    server
   )
 );
 
@@ -128,6 +146,7 @@ exports.styles = styles;
 exports.scripts = scripts;
 exports.mds = mds;
 exports.watch = watch;
+exports.server = server;
 
 /*
  * Define default task that can be called by just running `gulp` from cli
