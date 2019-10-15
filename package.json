@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev:demo": "cross-env NODE_ENV=development MY_PROJECT_NAME=demo gulp --gulpfile gulpfile.js"
+    "dev": "cross-env NODE_ENV=development gulp --gulpfile gulpfile.js"
   },
   "repository": {
     "type": "git",

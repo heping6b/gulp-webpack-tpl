@@ -1,7 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 // eg: new es3ifyPlugin()
-// const es3ifyPlugin = require('es3ify-webpack-plugin')
+// const es3ifyPlugin = require('es3ify-webpack-plugin');
 
 module.exports = {
   entry: {},

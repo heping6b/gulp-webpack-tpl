@@ -1,72 +1,40 @@
-const fs = require('fs');
-const del = require('del');
-const path = require('path');
-const gulp = require('gulp');
-const less = require('gulp-less');
-const webpack = require('webpack');
-const gutil = require('gulp-util');
-const rename = require('gulp-rename');
-const merge = require('webpack-merge');
-const mincss = require('gulp-clean-css');
-const markdown = require('gulp-markdown');
-const autoprefixer = require('gulp-autoprefixer');
-const webpackConfig = require('./webpack.config');
+var fs = require('fs');
+var del = require('del');
+var path = require('path');
+var gulp = require('gulp');
+var less = require('gulp-less');
+var webpack = require('webpack');
+var gutil = require('gulp-util');
+var rename = require('gulp-rename');
+var merge = require('webpack-merge');
+var mincss = require('gulp-clean-css');
+var markdown = require('gulp-markdown');
+var autoprefixer = require('gulp-autoprefixer');
+var webpackConfig = require('./webpack.config');
 
-const prjectName = process.env.MY_PROJECT_NAME || 'src';
-const prjectMode = process.env.NODE_ENV || 'development';
+var NODE_ENV = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
 console.log('process.env', process.env);
 
 // 项目配置
-const config = {
-  package: {
-    scripts: {
-      src: { index: `${prjectName}/index.js` },
-      dest: `dist/${prjectName}/js`
-    },
-    mds: {
-      src: 'docs/**/*.md',
-      dest: path.resolve(__dirname, 'dist/docs')
-    }
+var projectConfig = {
+  html: {
+    src: 'src/index.html',
+    dest: 'dist'
   },
-
-  src: {
-    htmls: {
-      src: `${prjectName}/index.html`,
-      dest: `dist/${prjectName}/`
-    },
-
-    styles: {
-      src: `${prjectName}/css/index.less`,
-      dest: `dist/${prjectName}/css`
-    },
-
-    scripts: {
-      src: { index: `${prjectName}/js/index.js` },
-      dest: `dist/${prjectName}/js`
-    },
-
-    mds: {
-      src: 'docs/**/*.md',
-      dest: path.resolve(__dirname, 'dist/docs')
-    }
+  styles: {
+    src: 'src/styles/index.less',
+    dest: 'dist/styles'
   },
-
+  scripts: {
+    src: 'src/scripts/index.js',
+    dest: 'dist/scripts'
+  },
+  mds: {
+    src: 'documents/**/*.md',
+    dest: path.resolve(__dirname, 'docs')
+  }
 };
-
-const filePath = config[prjectName] || {};
-
-const htmlEntry = filePath.htmls && filePath.htmls.src;
-const htmlOutput = filePath.htmls && filePath.htmls.dest;
-
-const styleEntry = filePath.styles && filePath.styles.src;
-const styleOutput = filePath.styles && filePath.styles.dest;
-
-const scriptEntry = filePath.scripts && filePath.scripts.src;
-const scriptOutput = filePath.scripts && filePath.scripts.dest;
-
-const mdEntry = filePath.mds && filePath.mds.src;
-const mdOutput = filePath.mds && filePath.mds.dest;
 
 /* Not all tasks need to use streams, a gulpfile is just another node program
  * and you can use all packages available on npm, but it must return either a
@@ -79,15 +47,15 @@ function clean() {
 }
 
 function html() {
-  return gulp.src(htmlEntry)
-    .pipe(gulp.dest(htmlOutput));
+  return gulp.src(projectConfig.html.src)
+    .pipe(gulp.dest(projectConfig.html.dest));
 }
 
 /*
  * Define our tasks using plain functions
  */
-function css() {
-  return gulp.src(styleEntry)
+function styles() {
+  return gulp.src(projectConfig.styles.src)
     .pipe(
       less({
         javascriptEnabled: true
@@ -98,23 +66,23 @@ function css() {
         })
     )
     .pipe(autoprefixer())
-    .pipe(gulp.dest(styleOutput))
+    .pipe(gulp.dest(projectConfig.styles.dest))
     .pipe(mincss())
     .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest(styleOutput));
+    .pipe(gulp.dest(projectConfig.styles.dest));
 }
 
 /*
  * js 异步打包，webpack的 watch 功能，会自动监视目标文件，有文件修改会自动重新打包
  */
-function js() {
+function scripts() {
   webpack(
     merge(webpackConfig, {
-      entry: scriptEntry,
+      entry: path.resolve(__dirname, projectConfig.scripts.src),
       output: {
-        path: scriptOutput
+        path: path.resolve(__dirname, projectConfig.scripts.dest),
       },
-      mode: prjectMode,
+      mode: NODE_ENV,
     })
   ).watch(200, (err, stats) => {
     if (err) {
@@ -124,39 +92,29 @@ function js() {
   });
 }
 
-function md() {
-  return gulp.src(mdEntry)
+function mds() {
+  return gulp.src(projectConfig.mds.src)
     .pipe(markdown())
-    .pipe(gulp.dest(mdOutput));
+    .pipe(gulp.dest(projectConfig.mds.dest));
 }
 
 function watch() {
-  if (htmlEntry) {
-    gulp.watch(htmlEntry, html);
-  }
-  if (scriptEntry) {
-    gulp.watch(scriptEntry, js);
-  }
-  if (mdEntry) {
-    gulp.watch(mdEntry, mds);
-  }
-  if (styleEntry) {
-    gulp.watch(styleEntry, css);
-  }
+  gulp.watch(projectConfig.html.src, html);
+  gulp.watch(projectConfig.styles.src, scripts);
+  gulp.watch(projectConfig.styles.src, styles);
+  gulp.watch(projectConfig.mds.src, mds);
 }
 
 /*
  * Specify if tasks run in series or parallel using `gulp.series` and `gulp.parallel`
  */
-const build = gulp.series(
+var build = gulp.series(
   clean,
   gulp.parallel(
-    /*  htmlEntry ? html : '',
-     styleEntry ? css : '',
-     scriptEntry ? js : '',
-     mdEntry ? md : '', */
-    // js,
-    styleEntry,
+    html,
+    styles,
+    scripts,
+    mds,
     watch
   )
 );
@@ -165,18 +123,10 @@ const build = gulp.series(
  * You can use CommonJS `exports` module notation to declare tasks
  */
 exports.clean = clean;
-if (htmlEntry) {
-  exports.html = html;
-}
-if (styleEntry) {
-  exports.css = css;
-}
-if (scriptEntry) {
-  exports.js = js;
-}
-if (mdEntry) {
-  exports.md = md;
-}
+exports.html = html;
+exports.styles = styles;
+exports.scripts = scripts;
+exports.mds = mds;
 exports.watch = watch;
 
 /*
