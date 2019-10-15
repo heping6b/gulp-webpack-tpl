@@ -1,21 +1,22 @@
 {
-  "name": "gulpcli",
+  "name": "gulp-webpack-tpl",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "gulp and webpack resource integration",
+  "main": "gulpfile.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development gulp --gulpfile gulpfile.js"
+    "dev": "cross-env NODE_ENV=development gulp --gulpfile gulpfile.js",
+    "build": "cross-env NODE_ENV=production gulp --gulpfile gulpfile.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hepingmogul/gulpCli.git"
+    "url": "git+https://github.com/hepingmogul/gulp-webpack-tpl.git"
   },
-  "author": "hepingmogul",
+  "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/hepingmogul/gulpCli/issues"
+    "url": "https://github.com/hepingmogul/gulp-webpack-tpl/issues"
   },
-  "homepage": "https://github.com/hepingmogul/gulpCli#readme",
+  "homepage": "https://github.com/hepingmogul/gulp-webpack-tpl#readme",
   "devDependencies": {
     "gulp": "^4.0.0"
   },
